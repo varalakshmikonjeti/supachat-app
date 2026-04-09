@@ -14,7 +14,7 @@ export default function Home() {
     setQuery("");
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/chat", {
+      const res = await fetch("https://supabase-backend-r6vw.onrender.com/chat",  {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
