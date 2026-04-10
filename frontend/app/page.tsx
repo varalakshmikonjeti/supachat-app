@@ -31,16 +31,14 @@ export default function Page() {
     setLoading(true);
 
     try {
-      const res = await fetch(
-        "https://supabase-backend-r6vw.onrender.com/chat",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ query: input }),
-        }
-      );
+      // ✅ FIXED: Using Nginx route instead of direct backend
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query: input }),
+      });
 
       const data = await res.json();
 
@@ -79,7 +77,7 @@ export default function Page() {
 
       return (
         <div style={{ width: "100%" }}>
-          {/* ✅ TABLE */}
+          {/* TABLE */}
           <div
             style={{
               background: "#f3f4f6",
@@ -113,7 +111,7 @@ export default function Page() {
             </table>
           </div>
 
-          {/* ✅ CHART (Recharts) */}
+          {/* CHART */}
           <div style={{ height: "250px" }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={uniqueData}>
@@ -192,7 +190,6 @@ export default function Page() {
             </div>
           ))}
 
-          {/* ✅ LOADING */}
           {loading && <p>Loading...</p>}
         </div>
 
