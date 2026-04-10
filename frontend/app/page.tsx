@@ -2,102 +2,104 @@
 
 import { useState } from "react";
 
-export default function Home() {
-  const [query, setQuery] = useState("");
-  const [messages, setMessages] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+type Message =
+  | { role: "user"; content: string }
+  | { role: "bot"; content: any };
+
+export default function Page() {
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
 
   const sendMessage = async () => {
-    if (!query.trim()) return;
+    if (!input.trim()) return;
 
-    const userMsg = { role: "user", content: query };
-    setMessages((prev) => [...prev, userMsg]);
+    const userMessage: Message = {
+      role: "user",
+      content: input,
+    };
 
-    setQuery("");
-    setLoading(true);
+    setMessages((prev) => [...prev, userMessage]);
 
-    try {
-      const res = await fetch(
-        "https://supabase-backend-r6vw.onrender.com/chat",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query }),
-        }
-      );
+    // ----------------------------
+    // MOCK BOT RESPONSE (replace with API call)
+    // ----------------------------
+    const fakeResponse =
+      input.toLowerCase() === "devops"
+        ? {
+            type: "table",
+            data: [
+              {
+                id: 1,
+                title: "Docker Basics",
+                topic: "DevOps",
+                views: 90,
+                likes: 20,
+              },
+              {
+                id: 2,
+                title: "Kubernetes Guide",
+                topic: "DevOps",
+                views: 150,
+                likes: 50,
+              },
+              {
+                id: 3,
+                title: "CI/CD Explained",
+                topic: "DevOps",
+                views: 170,
+                likes: 60,
+              },
+            ],
+          }
+        : {
+            type: "text",
+            message: "Try: devops, ai articles, top topics",
+          };
 
-      const data = await res.json();
+    setMessages((prev) => [
+      ...prev,
+      { role: "bot", content: fakeResponse },
+    ]);
 
-      setMessages((prev) => [...prev, { role: "bot", content: data }]);
-    } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "bot", content: { type: "text", data: "Server error" } },
-      ]);
-    }
-
-    setLoading(false);
+    setInput("");
   };
 
-  const renderBot = (content: any) => {
-    if (!content) return null;
-
-    // TEXT
-    if (content.type === "text") {
-      return <div>{content.data}</div>;
-    }
-
-    // TABLE (CLEAN ASSIGNMENT STYLE)
-    if (content.type === "table") {
-      const uniqueData = Array.from(
-        new Map(
-          content.data.map((item: any) => [
-            item.title + item.topic,
-            item,
-          ])
-        ).values()
-      );
-
+  const renderBotMessage = (content: any) => {
+    if (content?.type === "table") {
       return (
-        <div style={{ marginTop: "8px" }}>
+        <div
+          style={{
+            background: "#f3f4f6",
+            padding: "10px",
+            borderRadius: "10px",
+            color: "#111",
+            overflowX: "auto",
+          }}
+        >
           <table
             style={{
               width: "100%",
               borderCollapse: "collapse",
+              color: "#111",
               fontSize: "14px",
             }}
           >
             <thead>
-              <tr style={{ background: "#eee" }}>
-                <th style={{ padding: "8px", border: "1px solid #ccc" }}>
-                  Title
-                </th>
-                <th style={{ padding: "8px", border: "1px solid #ccc" }}>
-                  Topic
-                </th>
-                <th style={{ padding: "8px", border: "1px solid #ccc" }}>
-                  Views
-                </th>
-                <th style={{ padding: "8px", border: "1px solid #ccc" }}>
-                  Likes
-                </th>
+              <tr>
+                <th style={thStyle}>Title</th>
+                <th style={thStyle}>Topic</th>
+                <th style={thStyle}>Views</th>
+                <th style={thStyle}>Likes</th>
               </tr>
             </thead>
+
             <tbody>
-              {uniqueData.map((item: any, i: number) => (
-                <tr key={i}>
-                  <td style={{ padding: "8px", border: "1px solid #ccc" }}>
-                    {item.title}
-                  </td>
-                  <td style={{ padding: "8px", border: "1px solid #ccc" }}>
-                    {item.topic}
-                  </td>
-                  <td style={{ padding: "8px", border: "1px solid #ccc" }}>
-                    {item.views}
-                  </td>
-                  <td style={{ padding: "8px", border: "1px solid #ccc" }}>
-                    {item.likes}
-                  </td>
+              {content.data.map((item: any) => (
+                <tr key={item.id}>
+                  <td style={tdStyle}>{item.title}</td>
+                  <td style={tdStyle}>{item.topic}</td>
+                  <td style={tdStyle}>{item.views}</td>
+                  <td style={tdStyle}>{item.likes}</td>
                 </tr>
               ))}
             </tbody>
@@ -106,97 +108,144 @@ export default function Home() {
       );
     }
 
-    return <pre>{JSON.stringify(content, null, 2)}</pre>;
+    return (
+      <div style={{ color: "#111" }}>
+        {content?.message || "No response"}
+      </div>
+    );
   };
 
   return (
     <div
       style={{
-        maxWidth: "700px",
-        margin: "auto",
-        padding: "20px",
-        fontFamily: "Arial",
-        background: "#f6f6f6",
         minHeight: "100vh",
+        background: "#ffffff",
+        display: "flex",
+        justifyContent: "center",
+        padding: "20px",
+        color: "#111",
       }}
     >
-      <h2 style={{ textAlign: "center" }}>💬 Supabase Chat</h2>
-
-      {/* CHAT BOX */}
       <div
         style={{
-          background: "white",
-          padding: "15px",
-          borderRadius: "10px",
-          minHeight: "400px",
+          width: "100%",
+          maxWidth: "600px",
+          display: "flex",
+          flexDirection: "column",
           border: "1px solid #ddd",
+          borderRadius: "12px",
+          overflow: "hidden",
         }}
       >
-        {messages.map((msg, i) => (
-          <div key={i} style={{ marginBottom: "12px" }}>
-            {msg.role === "user" ? (
-              <div style={{ textAlign: "right" }}>
-                <span
-                  style={{
-                    background: "#007bff",
-                    color: "white",
-                    padding: "8px 12px",
-                    borderRadius: "15px",
-                    display: "inline-block",
-                  }}
-                >
-                  {msg.content}
-                </span>
-              </div>
-            ) : (
-              <div style={{ textAlign: "left" }}>
-                <div
-                  style={{
-                    background: "#eaeaea",
-                    padding: "10px",
-                    borderRadius: "10px",
-                    display: "inline-block",
-                    maxWidth: "100%",
-                  }}
-                >
-                  <b>Bot:</b>
-                  {renderBot(msg.content)}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
+        {/* Header */}
+        <div
+          style={{
+            padding: "15px",
+            background: "#111",
+            color: "#fff",
+            textAlign: "center",
+          }}
+        >
+          Supabase Chat
+        </div>
 
-        {loading && <p>Bot is typing...</p>}
-      </div>
-
-      {/* INPUT */}
-      <div style={{ display: "flex", marginTop: "10px" }}>
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Ask something..."
+        {/* Messages */}
+        <div
           style={{
             flex: 1,
             padding: "10px",
-            borderRadius: "8px",
-            border: "1px solid #ccc",
-          }}
-        />
-        <button
-          onClick={sendMessage}
-          style={{
-            marginLeft: "10px",
-            padding: "10px 15px",
-            background: "black",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
+            background: "#fafafa",
           }}
         >
-          Send
-        </button>
+          {messages.map((msg, idx) => (
+            <div
+              key={idx}
+              style={{
+                marginBottom: "10px",
+                display: "flex",
+                justifyContent:
+                  msg.role === "user" ? "flex-end" : "flex-start",
+              }}
+            >
+              {msg.role === "user" ? (
+                <div style={userBubble}>{msg.content}</div>
+              ) : (
+                <div style={botBubble}>
+                  {renderBotMessage(msg.content)}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Input */}
+        <div
+          style={{
+            display: "flex",
+            padding: "10px",
+            borderTop: "1px solid #ddd",
+            background: "#fff",
+          }}
+        >
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask something..."
+            style={{
+              flex: 1,
+              padding: "10px",
+              border: "1px solid #ccc",
+              borderRadius: "8px",
+              outline: "none",
+              color: "#111",
+            }}
+          />
+          <button
+            onClick={sendMessage}
+            style={{
+              marginLeft: "10px",
+              padding: "10px 15px",
+              background: "#000",
+              color: "#fff",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+            }}
+          >
+            Send
+          </button>
+        </div>
       </div>
     </div>
   );
 }
+
+// ---------------- STYLES ----------------
+const userBubble: React.CSSProperties = {
+  background: "#0070f3",
+  color: "#fff",
+  padding: "8px 12px",
+  borderRadius: "10px",
+  maxWidth: "70%",
+};
+
+const botBubble: React.CSSProperties = {
+  background: "#e5e7eb",
+  color: "#111",
+  padding: "8px 12px",
+  borderRadius: "10px",
+  maxWidth: "90%",
+};
+
+const thStyle: React.CSSProperties = {
+  border: "1px solid #ccc",
+  padding: "8px",
+  background: "#f0f0f0",
+  color: "#000",
+};
+
+const tdStyle: React.CSSProperties = {
+  border: "1px solid #ccc",
+  padding: "8px",
+  color: "#111",
+};
