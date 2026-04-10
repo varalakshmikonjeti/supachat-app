@@ -2,104 +2,115 @@
 
 import { useState } from "react";
 
-export default function Page() {
+export default function Home() {
   const [query, setQuery] = useState("");
-  const [messages, setMessages] = useState<
-    { role: string; text?: string; data?: any }[]
-  >([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const sendQuery = async () => {
+  const sendMessage = async () => {
     if (!query.trim()) return;
 
-    const currentQuery = query;
-
-    // Add user message
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", text: currentQuery },
-    ]);
-
+    const userMessage = { role: "user", content: query };
+    setMessages((prev) => [...prev, userMessage]);
     setQuery("");
     setLoading(true);
 
     try {
-      const res = await fetch(
-        "https://supabase-backend-r6vw.onrender.com/chat",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ query: currentQuery }),
-        }
-      );
+      const res = await fetch("https://supabase-backend-r6vw.onrender.com/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query }),
+      });
 
       const data = await res.json();
 
-      // Add bot message
-      setMessages((prev) => [
-        ...prev,
-        { role: "bot", data },
-      ]);
+      const botMessage = {
+        role: "bot",
+        content: data,
+      };
+
+      setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
       setMessages((prev) => [
         ...prev,
-        {
-          role: "bot",
-          data: { message: "Error connecting to backend" },
-        },
+        { role: "bot", content: { type: "text", data: "Error connecting server" } },
       ]);
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
+  };
+
+  const renderBotResponse = (content: any) => {
+    if (!content) return "No response";
+
+    // TABLE RESPONSE
+    if (content.type === "table") {
+      return (
+        <table border={1} cellPadding={8} style={{ marginTop: "10px" }}>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Topic</th>
+              <th>Views</th>
+              <th>Likes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {content.data.map((item: any, index: number) => (
+              <tr key={index}>
+                <td>{item.title}</td>
+                <td>{item.topic}</td>
+                <td>{item.views}</td>
+                <td>{item.likes}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    }
+
+    // TEXT RESPONSE
+    if (content.type === "text") {
+      return <p>{content.data}</p>;
+    }
+
+    return <pre>{JSON.stringify(content, null, 2)}</pre>;
   };
 
   return (
-    <div style={{ maxWidth: "600px", margin: "0 auto", padding: "20px" }}>
-      <h2>💬 Supabase Chat</h2>
+    <div style={{ maxWidth: "700px", margin: "auto", padding: "20px" }}>
+      <h2>Supabase Chat</h2>
 
-      {/* Chat Box */}
-      <div
-        style={{
-          border: "1px solid #ccc",
-          padding: "10px",
-          height: "400px",
-          overflowY: "auto",
-          marginBottom: "10px",
-        }}
-      >
+      <div style={{ border: "1px solid #ccc", padding: "10px", minHeight: "300px" }}>
         {messages.map((msg, index) => (
           <div key={index} style={{ marginBottom: "10px" }}>
             {msg.role === "user" ? (
-              <div>
-                <b>You:</b> {msg.text}
-              </div>
+              <p><b>You:</b> {msg.content}</p>
             ) : (
               <div>
-                <b>Bot:</b>{" "}
-                {msg.data?.message || JSON.stringify(msg.data)}
+                <b>Bot:</b>
+                {renderBotResponse(msg.content)}
               </div>
             )}
           </div>
         ))}
 
-        {loading && <p>⏳ Thinking...</p>}
+        {loading && <p>Bot is typing...</p>}
       </div>
 
-      {/* Input */}
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Ask something..."
-        style={{ width: "70%", padding: "10px" }}
-        onKeyDown={(e) => e.key === "Enter" && sendQuery()}
-      />
-
-      <button onClick={sendQuery} style={{ padding: "10px" }}>
-        Send
-      </button>
+      <div style={{ marginTop: "10px" }}>
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Ask something..."
+          style={{ width: "80%", padding: "8px" }}
+        />
+        <button onClick={sendMessage} style={{ padding: "8px 12px" }}>
+          Send
+        </button>
+      </div>
     </div>
   );
 }
