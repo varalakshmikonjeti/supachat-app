@@ -2,152 +2,102 @@
 
 import { useState } from "react";
 
-export default function Home() {
+export default function Page() {
   const [query, setQuery] = useState("");
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<
+    { role: string; text?: string; data?: any }[]
+  >([]);
+  const [loading, setLoading] = useState(false);
 
   const sendQuery = async () => {
-    if (!query) return;
+    if (!query.trim()) return;
 
-    const newMessages = [...messages, { role: "user", text: query }];
-    setMessages(newMessages);
+    const currentQuery = query;
+
+    // Add user message
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", text: currentQuery },
+    ]);
+
     setQuery("");
+    setLoading(true);
 
     try {
-      const res = await fetch("https://supabase-backend-r6vw.onrender.com/chat",  {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query }),
-      });
+      const res = await fetch(
+        "https://supabase-backend-r6vw.onrender.com/chat",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ query: currentQuery }),
+        }
+      );
 
       const data = await res.json();
 
-      setMessages([
-        ...newMessages,
-        { role: "bot", data: data }
+      // Add bot message
+      setMessages((prev) => [
+        ...prev,
+        { role: "bot", data },
       ]);
-    } catch (err) {
-      console.error(err);
-      setMessages([
-        ...newMessages,
-        { role: "bot", data: { message: "Error connecting to backend" } }
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "bot",
+          data: { message: "Error connecting to backend" },
+        },
       ]);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "700px", margin: "auto" }}>
-      <h1>💬 Supabase Chat</h1>
+    <div style={{ maxWidth: "600px", margin: "0 auto", padding: "20px" }}>
+      <h2>💬 Supabase Chat</h2>
 
-      {/* Chat Messages */}
-      <div style={{ minHeight: "300px", marginBottom: "20px" }}>
-        {messages.map((msg, i) => (
-          <div key={i} style={{ marginBottom: "15px" }}>
+      {/* Chat Box */}
+      <div
+        style={{
+          border: "1px solid #ccc",
+          padding: "10px",
+          height: "400px",
+          overflowY: "auto",
+          marginBottom: "10px",
+        }}
+      >
+        {messages.map((msg, index) => (
+          <div key={index} style={{ marginBottom: "10px" }}>
             {msg.role === "user" ? (
-              <div style={{ textAlign: "right" }}>
-                <span
-                  style={{
-                    background: "#0070f3",
-                    color: "white",
-                    padding: "10px",
-                    borderRadius: "10px",
-                    display: "inline-block"
-                  }}
-                >
-                  {msg.text}
-                </span>
+              <div>
+                <b>You:</b> {msg.text}
               </div>
             ) : (
-              <div style={{ textAlign: "left" }}>
-                <div
-                  style={{
-                    background: "#f1f1f1",
-                    padding: "10px",
-                    borderRadius: "10px",
-                    color: "black"
-                  }}
-                >
-                  {msg.data?.type === "table" ? (
-                    <table
-                      style={{
-                        borderCollapse: "collapse",
-                        width: "100%",
-                        background: "white",
-                        color: "black"
-                      }}
-                    >
-                      <thead>
-                        <tr>
-                          {Object.keys(msg.data.data[0] || {}).map((key) => (
-                            <th
-                              key={key}
-                              style={{
-                                border: "1px solid black",
-                                padding: "6px",
-                                background: "#ddd"
-                              }}
-                            >
-                              {key}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {msg.data.data.map((row: any, idx: number) => (
-                          <tr key={idx}>
-                            {Object.values(row).map((val: any, j) => (
-                              <td
-                                key={j}
-                                style={{
-                                  border: "1px solid black",
-                                  padding: "6px",
-                                  textAlign: "center"
-                                }}
-                              >
-                                {val}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <p>{msg.data?.message}</p>
-                  )}
-                </div>
+              <div>
+                <b>Bot:</b>{" "}
+                {msg.data?.message || JSON.stringify(msg.data)}
               </div>
             )}
           </div>
         ))}
+
+        {loading && <p>⏳ Thinking...</p>}
       </div>
 
       {/* Input */}
       <input
+        type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Ask something..."
-        style={{
-          padding: "10px",
-          width: "70%",
-          border: "1px solid gray",
-          borderRadius: "5px"
-        }}
+        style={{ width: "70%", padding: "10px" }}
+        onKeyDown={(e) => e.key === "Enter" && sendQuery()}
       />
 
-      <button
-        onClick={sendQuery}
-        style={{
-          padding: "10px",
-          marginLeft: "10px",
-          background: "#0070f3",
-          color: "white",
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer"
-        }}
-      >
+      <button onClick={sendQuery} style={{ padding: "10px" }}>
         Send
       </button>
     </div>
