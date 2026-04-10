@@ -1,6 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 type Message =
   | { role: "user"; content: string }
@@ -9,6 +17,7 @@ type Message =
 export default function Page() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -19,6 +28,7 @@ export default function Page() {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    setLoading(true);
 
     try {
       const res = await fetch(
@@ -48,13 +58,13 @@ export default function Page() {
       ]);
     }
 
+    setLoading(false);
     setInput("");
   };
 
-  // ✅ REMOVE DUPLICATES FUNCTION
+  // ✅ REMOVE DUPLICATES
   const removeDuplicates = (data: any[]) => {
     const seen = new Set();
-
     return data.filter((item) => {
       const key = `${item.title}-${item.topic}`;
       if (seen.has(key)) return false;
@@ -68,51 +78,57 @@ export default function Page() {
       const uniqueData = removeDuplicates(content.data || []);
 
       return (
-        <div
-          style={{
-            background: "#f3f4f6",
-            padding: "10px",
-            borderRadius: "10px",
-            color: "#111",
-            overflowX: "auto",
-          }}
-        >
-          <table
+        <div style={{ width: "100%" }}>
+          {/* ✅ TABLE */}
+          <div
             style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              fontSize: "14px",
+              background: "#f3f4f6",
+              padding: "10px",
+              borderRadius: "10px",
+              color: "#111",
+              overflowX: "auto",
+              marginBottom: "20px",
             }}
           >
-            <thead>
-              <tr>
-                <th style={thStyle}>Title</th>
-                <th style={thStyle}>Topic</th>
-                <th style={thStyle}>Views</th>
-                <th style={thStyle}>Likes</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {uniqueData.map((item: any, index: number) => (
-                <tr key={index}>
-                  <td style={tdStyle}>{item.title || "-"}</td>
-                  <td style={tdStyle}>{item.topic || "-"}</td>
-                  <td style={tdStyle}>{item.views || "-"}</td>
-                  <td style={tdStyle}>{item.likes || "-"}</td>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Title</th>
+                  <th style={thStyle}>Topic</th>
+                  <th style={thStyle}>Views</th>
+                  <th style={thStyle}>Likes</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody>
+                {uniqueData.map((item: any, index: number) => (
+                  <tr key={index}>
+                    <td style={tdStyle}>{item.title || "-"}</td>
+                    <td style={tdStyle}>{item.topic || "-"}</td>
+                    <td style={tdStyle}>{item.views || "-"}</td>
+                    <td style={tdStyle}>{item.likes || "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* ✅ CHART (Recharts) */}
+          <div style={{ height: "250px" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={uniqueData}>
+                <XAxis dataKey="topic" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="views" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       );
     }
 
-    return (
-      <div style={{ color: "#111" }}>
-        {content?.message || "No response"}
-      </div>
-    );
+    return <div>{content?.message || "No response"}</div>;
   };
 
   return (
@@ -136,6 +152,7 @@ export default function Page() {
           overflow: "hidden",
         }}
       >
+        {/* HEADER */}
         <div
           style={{
             padding: "15px",
@@ -147,6 +164,7 @@ export default function Page() {
           Supabase Chat
         </div>
 
+        {/* MESSAGES */}
         <div
           style={{
             flex: 1,
@@ -173,8 +191,12 @@ export default function Page() {
               )}
             </div>
           ))}
+
+          {/* ✅ LOADING */}
+          {loading && <p>Loading...</p>}
         </div>
 
+        {/* INPUT */}
         <div
           style={{
             display: "flex",
