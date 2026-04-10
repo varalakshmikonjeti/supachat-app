@@ -21,41 +21,33 @@ export default function Home() {
         "https://supabase-backend-r6vw.onrender.com/chat",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ query }),
         }
       );
 
       const data = await res.json();
 
-      setMessages((prev) => [
-        ...prev,
-        { role: "bot", content: data },
-      ]);
+      setMessages((prev) => [...prev, { role: "bot", content: data }]);
     } catch (err) {
       setMessages((prev) => [
         ...prev,
-        {
-          role: "bot",
-          content: { type: "text", data: "Error connecting backend" },
-        },
+        { role: "bot", content: { type: "text", data: "Server error" } },
       ]);
     }
 
     setLoading(false);
   };
 
-  const renderResponse = (content: any) => {
+  const renderBot = (content: any) => {
     if (!content) return null;
 
-    // TEXT RESPONSE
+    // TEXT
     if (content.type === "text") {
-      return <p>{content.data}</p>;
+      return <div>{content.data}</div>;
     }
 
-    // TABLE RESPONSE (REMOVE DUPLICATES)
+    // TABLE (CLEAN ASSIGNMENT STYLE)
     if (content.type === "table") {
       const uniqueData = Array.from(
         new Map(
@@ -67,27 +59,49 @@ export default function Home() {
       );
 
       return (
-        <div style={{ marginTop: "10px" }}>
-          {uniqueData.map((item: any, i: number) => (
-            <div
-              key={i}
-              style={{
-                border: "1px solid #ddd",
-                borderRadius: "10px",
-                padding: "10px",
-                marginBottom: "10px",
-                background: "#f9f9f9",
-              }}
-            >
-              <h4 style={{ margin: "0 0 5px 0" }}>
-                📌 {item.title}
-              </h4>
-              <p style={{ margin: 0 }}>Topic: {item.topic}</p>
-              <p style={{ margin: 0 }}>
-                Views: {item.views} | Likes: {item.likes}
-              </p>
-            </div>
-          ))}
+        <div style={{ marginTop: "8px" }}>
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              fontSize: "14px",
+            }}
+          >
+            <thead>
+              <tr style={{ background: "#eee" }}>
+                <th style={{ padding: "8px", border: "1px solid #ccc" }}>
+                  Title
+                </th>
+                <th style={{ padding: "8px", border: "1px solid #ccc" }}>
+                  Topic
+                </th>
+                <th style={{ padding: "8px", border: "1px solid #ccc" }}>
+                  Views
+                </th>
+                <th style={{ padding: "8px", border: "1px solid #ccc" }}>
+                  Likes
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {uniqueData.map((item: any, i: number) => (
+                <tr key={i}>
+                  <td style={{ padding: "8px", border: "1px solid #ccc" }}>
+                    {item.title}
+                  </td>
+                  <td style={{ padding: "8px", border: "1px solid #ccc" }}>
+                    {item.topic}
+                  </td>
+                  <td style={{ padding: "8px", border: "1px solid #ccc" }}>
+                    {item.views}
+                  </td>
+                  <td style={{ padding: "8px", border: "1px solid #ccc" }}>
+                    {item.likes}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       );
     }
@@ -102,6 +116,8 @@ export default function Home() {
         margin: "auto",
         padding: "20px",
         fontFamily: "Arial",
+        background: "#f6f6f6",
+        minHeight: "100vh",
       }}
     >
       <h2 style={{ textAlign: "center" }}>💬 Supabase Chat</h2>
@@ -109,14 +125,15 @@ export default function Home() {
       {/* CHAT BOX */}
       <div
         style={{
-          border: "1px solid #ddd",
-          padding: "10px",
-          minHeight: "400px",
+          background: "white",
+          padding: "15px",
           borderRadius: "10px",
+          minHeight: "400px",
+          border: "1px solid #ddd",
         }}
       >
         {messages.map((msg, i) => (
-          <div key={i} style={{ marginBottom: "15px" }}>
+          <div key={i} style={{ marginBottom: "12px" }}>
             {msg.role === "user" ? (
               <div style={{ textAlign: "right" }}>
                 <span
@@ -128,14 +145,14 @@ export default function Home() {
                     display: "inline-block",
                   }}
                 >
-                  You: {msg.content}
+                  {msg.content}
                 </span>
               </div>
             ) : (
               <div style={{ textAlign: "left" }}>
-                <span
+                <div
                   style={{
-                    background: "#f1f1f1",
+                    background: "#eaeaea",
                     padding: "10px",
                     borderRadius: "10px",
                     display: "inline-block",
@@ -143,8 +160,8 @@ export default function Home() {
                   }}
                 >
                   <b>Bot:</b>
-                  {renderResponse(msg.content)}
-                </span>
+                  {renderBot(msg.content)}
+                </div>
               </div>
             )}
           </div>
@@ -154,7 +171,7 @@ export default function Home() {
       </div>
 
       {/* INPUT */}
-      <div style={{ marginTop: "10px", display: "flex" }}>
+      <div style={{ display: "flex", marginTop: "10px" }}>
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -166,7 +183,6 @@ export default function Home() {
             border: "1px solid #ccc",
           }}
         />
-
         <button
           onClick={sendMessage}
           style={{
@@ -176,7 +192,6 @@ export default function Home() {
             color: "white",
             border: "none",
             borderRadius: "8px",
-            cursor: "pointer",
           }}
         >
           Send
