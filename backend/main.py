@@ -40,10 +40,10 @@ async def chat(req: ChatRequest):
     user_query = req.query.lower().strip()
 
     try:
-        # ✅ TOP TOPICS
+        # ✅ TOP TOPICS (FIXED)
         if "top" in user_query and "topic" in user_query:
             response = supabase.table("articles") \
-                .select("topic, views") \
+                .select("title, topic, views, likes") \
                 .order("views", desc=True) \
                 .limit(5) \
                 .execute()
