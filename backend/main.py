@@ -9,6 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()
 
 app = FastAPI()
+from prometheus_fastapi_instrumentator import Instrumentator
+Instrumentator().instrument(app).expose(app)
 
 # ✅ CORS (VERY IMPORTANT for frontend)
 app.add_middleware(
