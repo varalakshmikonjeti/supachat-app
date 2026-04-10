@@ -22,7 +22,7 @@ export default function Page() {
 
     try {
       const res = await fetch(
-        "https://supabase-backend-r6vw.onrender.com/chat", // ✅ YOUR BACKEND URL
+        "https://supabase-backend-r6vw.onrender.com/chat",
         {
           method: "POST",
           headers: {
@@ -51,9 +51,22 @@ export default function Page() {
     setInput("");
   };
 
+  // ✅ REMOVE DUPLICATES FUNCTION
+  const removeDuplicates = (data: any[]) => {
+    const seen = new Set();
+
+    return data.filter((item) => {
+      const key = `${item.title}-${item.topic}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+
   const renderBotMessage = (content: any) => {
-    // ✅ TABLE RESPONSE
     if (content?.type === "table") {
+      const uniqueData = removeDuplicates(content.data || []);
+
       return (
         <div
           style={{
@@ -81,7 +94,7 @@ export default function Page() {
             </thead>
 
             <tbody>
-              {content.data?.map((item: any, index: number) => (
+              {uniqueData.map((item: any, index: number) => (
                 <tr key={index}>
                   <td style={tdStyle}>{item.title || "-"}</td>
                   <td style={tdStyle}>{item.topic || "-"}</td>
@@ -95,7 +108,6 @@ export default function Page() {
       );
     }
 
-    // ✅ TEXT RESPONSE
     return (
       <div style={{ color: "#111" }}>
         {content?.message || "No response"}
@@ -124,7 +136,6 @@ export default function Page() {
           overflow: "hidden",
         }}
       >
-        {/* HEADER */}
         <div
           style={{
             padding: "15px",
@@ -136,7 +147,6 @@ export default function Page() {
           Supabase Chat
         </div>
 
-        {/* MESSAGES */}
         <div
           style={{
             flex: 1,
@@ -165,7 +175,6 @@ export default function Page() {
           ))}
         </div>
 
-        {/* INPUT */}
         <div
           style={{
             display: "flex",
