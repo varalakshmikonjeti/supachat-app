@@ -20,51 +20,39 @@ export default function Page() {
 
     setMessages((prev) => [...prev, userMessage]);
 
-    // ----------------------------
-    // MOCK BOT RESPONSE (replace with API call)
-    // ----------------------------
-    const fakeResponse =
-      input.toLowerCase() === "devops"
-        ? {
-            type: "table",
-            data: [
-              {
-                id: 1,
-                title: "Docker Basics",
-                topic: "DevOps",
-                views: 90,
-                likes: 20,
-              },
-              {
-                id: 2,
-                title: "Kubernetes Guide",
-                topic: "DevOps",
-                views: 150,
-                likes: 50,
-              },
-              {
-                id: 3,
-                title: "CI/CD Explained",
-                topic: "DevOps",
-                views: 170,
-                likes: 60,
-              },
-            ],
-          }
-        : {
-            type: "text",
-            message: "Try: devops, ai articles, top topics",
-          };
+    try {
+      const res = await fetch(
+        "https://supabase-backend-r6vw.onrender.com/chat", // ✅ YOUR BACKEND URL
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ query: input }),
+        }
+      );
 
-    setMessages((prev) => [
-      ...prev,
-      { role: "bot", content: fakeResponse },
-    ]);
+      const data = await res.json();
+
+      setMessages((prev) => [
+        ...prev,
+        { role: "bot", content: data },
+      ]);
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "bot",
+          content: { message: "Server error. Try again." },
+        },
+      ]);
+    }
 
     setInput("");
   };
 
   const renderBotMessage = (content: any) => {
+    // ✅ TABLE RESPONSE
     if (content?.type === "table") {
       return (
         <div
@@ -80,7 +68,6 @@ export default function Page() {
             style={{
               width: "100%",
               borderCollapse: "collapse",
-              color: "#111",
               fontSize: "14px",
             }}
           >
@@ -94,12 +81,12 @@ export default function Page() {
             </thead>
 
             <tbody>
-              {content.data.map((item: any) => (
-                <tr key={item.id}>
-                  <td style={tdStyle}>{item.title}</td>
-                  <td style={tdStyle}>{item.topic}</td>
-                  <td style={tdStyle}>{item.views}</td>
-                  <td style={tdStyle}>{item.likes}</td>
+              {content.data?.map((item: any, index: number) => (
+                <tr key={index}>
+                  <td style={tdStyle}>{item.title || "-"}</td>
+                  <td style={tdStyle}>{item.topic || "-"}</td>
+                  <td style={tdStyle}>{item.views || "-"}</td>
+                  <td style={tdStyle}>{item.likes || "-"}</td>
                 </tr>
               ))}
             </tbody>
@@ -108,6 +95,7 @@ export default function Page() {
       );
     }
 
+    // ✅ TEXT RESPONSE
     return (
       <div style={{ color: "#111" }}>
         {content?.message || "No response"}
@@ -123,7 +111,6 @@ export default function Page() {
         display: "flex",
         justifyContent: "center",
         padding: "20px",
-        color: "#111",
       }}
     >
       <div
@@ -137,7 +124,7 @@ export default function Page() {
           overflow: "hidden",
         }}
       >
-        {/* Header */}
+        {/* HEADER */}
         <div
           style={{
             padding: "15px",
@@ -149,7 +136,7 @@ export default function Page() {
           Supabase Chat
         </div>
 
-        {/* Messages */}
+        {/* MESSAGES */}
         <div
           style={{
             flex: 1,
@@ -178,7 +165,7 @@ export default function Page() {
           ))}
         </div>
 
-        {/* Input */}
+        {/* INPUT */}
         <div
           style={{
             display: "flex",
@@ -197,7 +184,6 @@ export default function Page() {
               border: "1px solid #ccc",
               borderRadius: "8px",
               outline: "none",
-              color: "#111",
             }}
           />
           <button
@@ -220,7 +206,7 @@ export default function Page() {
   );
 }
 
-// ---------------- STYLES ----------------
+// STYLES
 const userBubble: React.CSSProperties = {
   background: "#0070f3",
   color: "#fff",
@@ -241,11 +227,9 @@ const thStyle: React.CSSProperties = {
   border: "1px solid #ccc",
   padding: "8px",
   background: "#f0f0f0",
-  color: "#000",
 };
 
 const tdStyle: React.CSSProperties = {
   border: "1px solid #ccc",
   padding: "8px",
-  color: "#111",
 };
